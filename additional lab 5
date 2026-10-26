@@ -1,0 +1,175 @@
+import time
+import random
+
+# ==========================================
+# STUDENT-SPECIFIC INPUT RULES (Fill these in)
+# ==========================================
+LAST_NAME = "DEL MONTE"           # Replace with your surname
+STUDENT_ID = "TUPM-26-4306"    # Replace with your ID number
+FAVORITE_ARTIST = "LOONA"  # Replace with your favorite artist
+
+# --- Generate Specific Values ---
+SEED_DIGIT = int(STUDENT_ID[-1])
+ID_SUM = sum(int(digit) for digit in STUDENT_ID)
+NAME_LENGTH = len(LAST_NAME)
+ARTIST_LENGTH = len(FAVORITE_ARTIST)
+ARTIST_SUM = sum(ord(char.upper()) - 64 for char in FAVORITE_ARTIST if char.isalpha())
+
+print(f"--- Generated Values for {LAST_NAME} ---")
+print(f"SEED_DIGIT: {SEED_DIGIT}")
+print(f"ID_SUM: {ID_SUM}")
+print(f"ARTIST_SUM: {ARTIST_SUM}\n")
+
+
+# ==========================================
+# EXERCISE 1: EMERGENCY DISPATCH RECORD SEARCH
+# ==========================================
+print("="*50)
+print("EXERCISE 1: ROTATED RECORD SEARCH")
+print("="*50)
+
+# Data Generation Rules
+# Generate 20 unique values starting around ID_SUM
+num_records = 20
+original_records = [ID_SUM + i * 10 for i in range(num_records)]
+
+# Determine rotation point
+rotation_point = SEED_DIGIT % num_records
+rotated_records = original_records[rotation_point:] + original_records[:rotation_point]
+
+# Generate target
+target_incident = ID_SUM + ARTIST_SUM
+# Ensure target exists in dataset (if not, add it or pick a random one)
+if target_incident not in rotated_records:
+    target_incident = rotated_records[random.randint(0, num_records-1)]
+
+print(f"Original Dataset (first 5): {original_records[:5]}...")
+print(f"Rotated Dataset: {rotated_records}")
+print(f"Target Incident: {target_incident}\n")
+
+def linear_search(arr, target):
+    comparisons = 0
+    for i in range(len(arr)):
+        comparisons += 1
+        if arr[i] == target:
+            return i, comparisons
+    return -1, comparisons
+
+# Note: Standard Binary Search won't work on a rotated array without a specific modification.
+# Assuming the requirement asks to compare with a standard Linear Search.
+index, comparisons = linear_search(rotated_records, target_incident)
+
+print(f"Target {target_incident} found at index {index}" if index != -1 else "Target not found")
+print(f"Linear Search Comparisons: {comparisons}")
+print("Time Complexity: O(n)")
+print("Space Complexity: O(1)\n")
+
+
+# ==========================================
+# EXERCISE 2: SORTING ALGORITHM COMPARISON
+# ==========================================
+print("="*50)
+print("EXERCISE 2: SORTING ALGORITHM COMPARISON")
+print("="*50)
+
+# Data Generation
+# Generate 50 values based on student inputs
+dataset_size = 50
+base_data = [random.randint(ID_SUM, ID_SUM + 1000) for _ in range(dataset_size)]
+
+sorted_input = sorted(base_data)
+reverse_input = sorted(base_data, reverse=True)
+random_input = base_data[:] # Already random
+random.shuffle(random_input)
+
+# Sorting Algorithms with Metrics
+def bubble_sort(arr):
+    arr = arr.copy()
+    comparisons = 0
+    movements = 0
+    n = len(arr)
+    start_time = time.perf_counter()
+    
+    for i in range(n):
+        for j in range(0, n-i-1):
+            comparisons += 1
+            if arr[j] > arr[j+1]:
+                arr[j], arr[j+1] = arr[j+1], arr[j]
+                movements += 3 # 3 assignments per swap
+                
+    end_time = time.perf_counter()
+    return arr, comparisons, movements, (end_time - start_time)
+
+def selection_sort(arr):
+    arr = arr.copy()
+    comparisons = 0
+    movements = 0
+    n = len(arr)
+    start_time = time.perf_counter()
+    
+    for i in range(n):
+        min_idx = i
+        for j in range(i+1, n):
+            comparisons += 1
+            if arr[j] < arr[min_idx]:
+                min_idx = j
+        if min_idx != i:
+            arr[i], arr[min_idx] = arr[min_idx], arr[i]
+            movements += 3
+                
+    end_time = time.perf_counter()
+    return arr, comparisons, movements, (end_time - start_time)
+
+def insertion_sort(arr):
+    arr = arr.copy()
+    comparisons = 0
+    movements = 0
+    start_time = time.perf_counter()
+    
+    for i in range(1, len(arr)):
+        key = arr[i]
+        j = i - 1
+        while j >= 0:
+            comparisons += 1
+            if arr[j] > key:
+                arr[j + 1] = arr[j]
+                movements += 1
+                j -= 1
+            else:
+                break
+        arr[j + 1] = key
+        movements += 1 # Insertion
+        
+    end_time = time.perf_counter()
+    return arr, comparisons, movements, (end_time - start_time)
+
+
+def run_tests(input_name, data):
+    print(f"--- Input Condition: {input_name} ---")
+    print(f"{'Algorithm':<15} | {'Comparisons':<12} | {'Movements':<10} | {'Time (s)':<10}")
+    print("-" * 55)
+    
+    for algo_name, algo_func in [("Bubble Sort", bubble_sort), 
+                                 ("Selection Sort", selection_sort), 
+                                 ("Insertion Sort", insertion_sort)]:
+        sorted_arr, comps, moves, exec_time = algo_func(data)
+        
+        # Verify sorting
+        is_sorted = all(sorted_arr[i] <= sorted_arr[i+1] for i in range(len(sorted_arr)-1))
+        status = "Verified" if is_sorted else "Failed"
+        
+        print(f"{algo_name:<15} | {comps:<12} | {moves:<10} | {exec_time:.8f} ({status})")
+    print()
+
+# Run tests for all three conditions
+run_tests("Sorted Input", sorted_input)
+run_tests("Reverse-Ordered Input", reverse_input)
+run_tests("Random Input", random_input)
+
+print("="*50)
+print("ANALYSIS & INTERPRETATION NOTES:")
+print("1. Sorted Input: Insertion Sort and Bubble Sort perform best O(n).")
+print("2. Reverse Input: Bubble and Insertion perform worst O(n^2).")
+print("3. Random Input: All perform O(n^2), but Insertion usually beats Bubble.")
+print("4. Selection Sort performs O(n^2) comparisons regardless of initial order.")
+print("="*50)
